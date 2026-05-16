@@ -63,9 +63,14 @@ jobs:
           docker push $ECR_REGISTRY/microservices/notification-service:${{ github.sha }}
           docker tag $ECR_REGISTRY/microservices/notification-service:${{ github.sha }} $ECR_REGISTRY/microservices/notification-service:latest
           docker push $ECR_REGISTRY/microservices/notification-service:latest
+
   test:
     name: Run Tests
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://test:test@localhost/test
+      JWT_SECRET: test-secret
+      KAFKA_BOOTSTRAP_SERVERS: localhost:9092
 
     steps:
       - name: Checkout code
@@ -77,27 +82,19 @@ jobs:
           python-version: "3.11"
 
       - name: Test auth-service
-        env:
-          DATABASE_URL: postgresql://test:test@localhost/test
-          JWT_SECRET: test-secret
         run: |
           cd services/auth-service
           pip install -r requirements.txt
-          python -c "from routes import router; print('auth-service imports ok')"
+          python -c "from routes import router; print('auth-service ok')"
 
       - name: Test order-service
-        env:
-          DATABASE_URL: postgresql://test:test@localhost/test
         run: |
           cd services/order-service
           pip install -r requirements.txt
-          python -c "from kafka_producer import publish_order_event; print('order-service imports ok')"
+          python -c "from kafka_producer import publish_order_event; print('order-service ok')"
 
       - name: Test gateway
-        env:
-          DATABASE_URL: postgresql://test:test@localhost/test
-          JWT_SECRET: test-secret
         run: |
           cd gateway
           pip install -r requirements.txt
-          python -c "from circuit_breaker import breakers; print('gateway imports ok')"
+          python -c "from circuit_breaker import breakers; print('gateway ok')"
